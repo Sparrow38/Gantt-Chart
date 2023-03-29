@@ -4,9 +4,7 @@
 #include <QFont>
 #include <QString>
 
-/* Конструктор */
-
-Form::Form(int s1[], int f1[], int s2[], int f2[], int tf[], int ff[], int i[], int j[], int s, int mas[], int t, int d, QWidget *parent) :
+Form::Form(int s1[], int f1[], int s2[], int f2[], int tf[], int ff[], int firstStanok[], int secondStanok[],/* int s,*/ int mas[],/* int t, int d,*/ QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
 {
@@ -14,41 +12,39 @@ Form::Form(int s1[], int f1[], int s2[], int f2[], int tf[], int ff[], int i[], 
 
     /* Присвоение значений переменным класса из переменных конструктора */
 
-    this->s=s;
-    this->t=t;
-    this->d=d;
+    //this->s=s;
+    //this->t=t;
+    //this->d=d;
 
     for (int n=0;n<15;n++)
     {
-        this->s1[n]=s1[n];
-        this->f1[n]=f1[n];
-        this->f2[n]=f2[n];
-        this->s2[n]=s2[n];
-        this->tf[n]=tf[n];
-        this->ff[n]=ff[n];
-        this->i[n]=i[n];
-        this->j[n]=j[n];
-        this->mas[n]=mas[n];
+        this->s1[n]=s1[n]; //s1
+        this->f1[n]=f1[n];//f1
+        this->f2[n]=f2[n];//f2
+        this->s2[n]=s2[n];//s2
+        this->tf[n]=tf[n];//tf
+        this->ff[n]=ff[n];//ff
+        this->firstStanok[n]=firstStanok[n];//i
+        this->secondStanok[n]=secondStanok[n];//j
+        this->mas[n]=mas[n];//mas
     }
 
     make_table(); //создать таблицу
 
 /* Заполнение таблицы числами из массивов s1, s2, f1, f2, tf, ff, i, j, mas */
-    for (int n=0;n<15;n++)
+    for (int i=0;i<15;i++)
     {
-        ui->tableWidget->setItem(n,0,new QTableWidgetItem(QString::number(i[n])));
-        ui->tableWidget->setItem(n,1,new QTableWidgetItem(QString::number(j[n])));
-        ui->tableWidget->setItem(n,2,new QTableWidgetItem(QString::number(f1[n]-s1[n])));
-        ui->tableWidget->setItem(n,3,new QTableWidgetItem(QString::number(s1[n])));
-        ui->tableWidget->setItem(n,4,new QTableWidgetItem(QString::number(f1[n])));
-        ui->tableWidget->setItem(n,5,new QTableWidgetItem(QString::number(s2[n])));
-        ui->tableWidget->setItem(n,6,new QTableWidgetItem(QString::number(f2[n])));
-        ui->tableWidget->setItem(n,7,new QTableWidgetItem(QString::number(ff[n])));
-        ui->tableWidget->setItem(n,8,new QTableWidgetItem(QString::number(tf[n])));
+        ui->tableWidget->setItem(i,0,new QTableWidgetItem(QString::number(firstStanok[i])));
+        ui->tableWidget->setItem(i,1,new QTableWidgetItem(QString::number(secondStanok[i])));
+        ui->tableWidget->setItem(i,2,new QTableWidgetItem(QString::number(f1[i]-s1[i])));
+        ui->tableWidget->setItem(i,3,new QTableWidgetItem(QString::number(s1[i])));
+        ui->tableWidget->setItem(i,4,new QTableWidgetItem(QString::number(f1[i])));
+        ui->tableWidget->setItem(i,5,new QTableWidgetItem(QString::number(s2[i])));
+        ui->tableWidget->setItem(i,6,new QTableWidgetItem(QString::number(f2[i])));
+        ui->tableWidget->setItem(i,7,new QTableWidgetItem(QString::number(ff[i])));
+        ui->tableWidget->setItem(i,8,new QTableWidgetItem(QString::number(tf[i])));
     }
 }
-
-/* Деструктор */
 
 Form::~Form()
 {
@@ -57,57 +53,92 @@ Form::~Form()
 
 /* Построение графика */
 
-void Form::makePlot()
+void Form::makePlot()               // ДОДЕЛАТЬ ШЛАК
 {
     ui->customPlot->clearPlottables();//очистить поле от предыдущего графика
-    QCPBars *fossil = new QCPBars(ui->customPlot->yAxis, ui->customPlot->xAxis);//создаем объект для рисования графика
-    QCPBars *fossil2 = new QCPBars(ui->customPlot->yAxis, ui->customPlot->xAxis);//создаем объект для рисования графика
+    ui->customPlot->yAxis->setPadding(30); //насколько график по оси Y отходит от края виджета
+    ui->customPlot->xAxis->setPadding(30); //насколько график по оси Х отходит от края виджета
+
+    /*
+    int x_max=0;
+
+    for(int x=0;x<N;x++) if(f1[x]>x_max) x_max=f1[x]; // МАСШТАБ ШЛАКА
+    */
+
+    QCPBars *BarFirst = new QCPBars(ui->customPlot->yAxis, ui->customPlot->xAxis);//видимая полоска
+    QCPBars *BarSecond = new QCPBars(ui->customPlot->yAxis, ui->customPlot->xAxis);// невидимая полоска
     QVector<double> ticks;//массив значения x
-    QVector<double> fossilData;//массив значений y
-    QVector<double> fossilData2;//массив значений y
+    QVector<double> first;//массив значений x
+    QVector<double> second;//массив значений y
     QVector<QString> labels;
-    for (int k=1;k<=N;k++) ticks << k;
-    for (int n=0;n<N;n++) fossilData << f1[n];
-    for (int n=0;n<N;n++) fossilData2 << s1[n];
+    for (int tempN = N;tempN>=1;tempN--) ticks << tempN; // порядок вывода диаграмм
+    //рисуется полоска до даты финиша, после чего рисуется полоска невидимого цвета до даты старта
+    for (int n=0;n<N;n++) first << firstStanok[n]; // f1[n] было
+    for (int n=0;n<N;n++) second <<secondStanok[n];   //s1[n] было
     /* Задание значений для оси Y (подписи на оси) */
-    for(int x=0;x<N;x++) labels << "(" + QString::number(i[x])+ "," + QString::number(j[x]) + ")";
+    for(int x=0;x<N;x++) labels << "(" + QString::number(firstStanok[x])+ "," + QString::number(secondStanok[x]) + ")";
     QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
     textTicker->addTicks(ticks,labels);
+
     ui->customPlot->yAxis->setTicker(textTicker);
-    ui->customPlot->yAxis->setBasePen(QPen(Qt::white)); //установка белого цвета цифр
-    ui->customPlot->xAxis->setBasePen(QPen(Qt::white)); //для осей Х и Y
-    ui->customPlot->xAxis->setTickPen(QPen(Qt::white)); //установка белого цвета черточек
-    ui->customPlot->yAxis->setTickPen(QPen(Qt::white)); //для осей Х и Y
-    ui->customPlot->yAxis->setSubTickPen(QPen(Qt::white)); //белые черточки на оси Y
-    ui->customPlot->xAxis->setSubTickPen(QPen(Qt::white)); //белые черточки на оси Х
-    ui->customPlot->yAxis->setTickLabelColor(Qt::white); //белые надписи на оси Y
-    ui->customPlot->xAxis->setTickLabelColor(Qt::white); //белые надписи на оси X
-    ui->customPlot->setBackground(QBrush(QColor(70, 70, 70))); //задний фон
+    ui->customPlot->yAxis->setBasePen(QPen(Qt::black)); //установка белого цвета цифр
+    ui->customPlot->xAxis->setBasePen(QPen(Qt::black)); //для осей Х и Y
+    ui->customPlot->xAxis->setTickPen(QPen(Qt::black)); //установка белого цвета черточек
+    ui->customPlot->yAxis->setTickPen(QPen(Qt::black)); //для осей Х и Y
+    ui->customPlot->yAxis->setSubTickPen(QPen(Qt::black)); //белые черточки на оси Y
+    ui->customPlot->xAxis->setSubTickPen(QPen(Qt::black)); //белые черточки на оси Х
+    ui->customPlot->yAxis->setTickLabelColor(Qt::black); //белые надписи на оси Y
+    ui->customPlot->xAxis->setTickLabelColor(Qt::black); //белые надписи на оси X
+
+    //ui->customPlot->setBackground(QBrush(QColor(70, 70, 70))); //задний фон
+
     ui->customPlot->yAxis->setPadding(30); //насколько график по оси Y отходит от края виджета
     ui->customPlot->xAxis->setPadding(30); //насколько график по оси Х отходит от края виджета
     ui->customPlot->xAxis->setLabel("Время");   //задание названия оси Х
-    ui->customPlot->xAxis->setLabelColor(QColor(Qt::white));    //цвет для названия оси Х
+    ui->customPlot->xAxis->setLabelColor(QColor(Qt::black));    //цвет для названия оси Х
     ui->customPlot->xAxis->setLabelPadding(20); //отступ для названия оси Х
     QFont f("Times",14,QFont::Bold);    //выбор шрифта
-    ui->customPlot->xAxis->setLabelFont(f); //задание шрифта для надписи оси Х
+    //ui->customPlot->xAxis->setLabelFont(f); //задание шрифта для надписи оси Х
     ui->customPlot->yAxis->setLabel("Работы");  //задание названия оси Y
-    ui->customPlot->yAxis->setLabelColor(QColor(Qt::white));    //цвет для названий оси Y
-    ui->customPlot->yAxis->setLabelPadding(20); //отступ для названия оси Y
-    ui->customPlot->yAxis->setLabelFont(f);     //задание шрифта для надписи оси Y
-    fossil2->setBrush(QColor(70, 70, 70)); //цвет невидимой диаграммы
-    fossil2->setPen(QPen(QColor(70, 70, 70))); //контур невидимой диаграммы
-    fossil->setBrush(QColor(80, 177, 204)); //цвет диаграммы
-    fossil->setPen(QPen(QColor(70, 70, 70))); //цвет контура диаграммы
-    ui->customPlot->xAxis->grid()->setVisible(false);   //сделать невидимой сетку для оси Х
-    ui->customPlot->yAxis->grid()->setVisible(false);   //сделать невидимой сетку для оси Y
+    //ui->customPlot->yAxis->setLabelColor(QColor(Qt::black));    //цвет для названий оси Y
+    //ui->customPlot->yAxis->setLabelPadding(20); //отступ для названия оси Y
+    //ui->customPlot->yAxis->setLabelFont(f);     //задание шрифта для надписи оси Y
+    BarFirst->setBrush(QColor(80, 120, 204)); //цвет диаграммы
+    BarFirst->setPen(QPen(QColor(255, 255, 255,255))); //цвет контура диаграммы
+    BarSecond->setBrush(QColor(128,255,0)); //цвет невидимой диаграммы
+    BarSecond->setPen(QPen(QColor(255, 255, 255,255))); //контур невидимой диаграммы
+
+
+    //ui->customPlot->xAxis->grid()->setVisible(false);   //сделать невидимой сетку для оси Х
+    //ui->customPlot->yAxis->grid()->setVisible(false);   //сделать невидимой сетку для оси Y
 
     // Данные:
 
-    fossil2->setData(ticks,fossilData2);
-    fossil->setData(ticks, fossilData); //нарисовать график, каждому ticks сопоставится fossilData
+
+
+    BarSecond->setData(ticks, second); //нарисовать график, каждому ticks сопоставится fossilData
+    BarFirst->setData(ticks,first); //
+
 
     int x_max=0;
-    for(int x=0;x<N;x++) if(f1[x]>x_max) x_max=f1[x];
+
+    for(int x=0;x<N;x++) // МАСШТАБ ШЛАКА (ось икс)
+    {
+        if (firstStanok[x] > x_max)
+        {
+            x_max=firstStanok[x];
+        }
+        else if(secondStanok[x]>x_max)
+        {
+            x_max=secondStanok[x];
+        }
+    }
+    if (x_max%5 != 0)
+        {
+            x_max += 5 - x_max%5; // ось икс кратна 5
+        }
+
+
     ui->customPlot->yAxis->setRange(0, 16*N/15);//установка оси x графика
     ui->customPlot->xAxis->setRange(0, x_max);//установка оси y графика
     ui->customPlot->replot();//нарисовать график
@@ -117,28 +148,33 @@ void Form::makePlot()
 
 void Form::make_table()
 {
-    ui->tableWidget->setColumnCount(9); //число столбцов
-    ui->tableWidget->setRowCount(15);   //число строк
-    ui->tableWidget->setColumnWidth(0,70); //задание ширины столбца 1
-    ui->tableWidget->setColumnWidth(1,70); //задание ширины столбца 1
-    ui->tableWidget->setColumnWidth(2,120);  //задание ширины столбца 2
-    ui->tableWidget->setColumnWidth(3,70);  //задание ширины столбца 3
-    ui->tableWidget->setColumnWidth(4,60);  //задание ширины столбца 4
-    ui->tableWidget->setColumnWidth(5,70);  //задание ширины столбца 5
-    ui->label->setText("Сроки начала и окончания работ"); //задание надписи над таблицей
-    ui->label_2->setText("Резервы времени работ");  //задание надписи над таблицей
-
+    ui->tableWidget->setColumnCount(col); //число столбцов
+    ui->tableWidget->setRowCount(row);   //число строк
+    /*
+    ui->tableWidget->setColumnWidth(0,100); //задание ширины столбца 1
+    ui->tableWidget->setColumnWidth(1,100); //задание ширины столбца 1
+    ui->tableWidget->setColumnWidth(2,100);  //задание ширины столбца 2
+    ui->tableWidget->setColumnWidth(3,100);  //задание ширины столбца 3
+    ui->tableWidget->setColumnWidth(4,100);  //задание ширины столбца 4
+    ui->tableWidget->setColumnWidth(5,10);  //задание ширины столбца 5
+    */
+    for (int i=0;i<row;i++)
+    {
+     ui->tableWidget->setColumnWidth(i,100);
+    }
+    //ui->label->setText("Сроки начала и окончания работ"); //задание надписи над таблицей
+    //ui->label_2->setText("Резервы времени работ");  //задание надписи над таблицей
     /* Задание названий всех столбцов */
-    ui->tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Начальная\nвершина i")));
-    ui->tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Конечная\nвершина j")));
-    ui->tableWidget->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Продолжительность\n работы t(i,j)")));
-    ui->tableWidget->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("\n\nРаннее\nначало\ntрн")));
-    ui->tableWidget->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("\n\nРаннее\nокончание\ntро")));
-    ui->tableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem(tr("\n\nПозднее\nначало\ntпн")));
-    ui->tableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem(tr("\n\nПозднее\nокончание\ntпо")));
-    ui->tableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem(tr("\n\nПолный\n резерв Rп")));
-    ui->tableWidget->setHorizontalHeaderItem(8, new QTableWidgetItem(tr("\n\nСвободный\n резерв Rc")));
-
+#define UIset (ui->tableWidget->setHorizontalHeaderItem)
+    UIset(0, new QTableWidgetItem(tr("1 деталь")));
+    UIset(1, new QTableWidgetItem(tr("2 деталь")));
+    UIset(2, new QTableWidgetItem(tr("3 деталь")));
+    UIset(3, new QTableWidgetItem(tr("4 деталь")));
+    UIset(4, new QTableWidgetItem(tr("5 деталь")));
+    UIset(5, new QTableWidgetItem(tr("6 деталь")));
+    UIset(6, new QTableWidgetItem(tr("7 деталь")));
+    UIset(7, new QTableWidgetItem(tr("8 деталь")));
+    UIset(8, new QTableWidgetItem(tr("9 деталь")));
     /* Задание надписей под таблицей */
 
     ui->label_3->setText(QString("Продолжительность критического пути: %1").arg(s));
@@ -157,24 +193,29 @@ void Form::on_makeGraph_clicked()
     /* Считывание чисел из таблицы. Если в таблице поменять значения,
        то при нажатии на кнопку график перестроится с новыми значениями */
     QString number;
-    delete i;
-    delete j;
-    delete s1;
-    delete f1;
-    i=new int[N];
-    j=new int[N];
-    s1=new int[N];
-    f1=new int[N];
+    /*
+    delete[] i;
+    delete[] j;
+    delete[] s1;
+    delete[] f1;
+    */
+    std::vector<int> firstStanok(N);
+    std::vector<int> secondStanok(N);
+    std::vector<int> s1(N);
+    std::vector<int> f1(N);
+    //старый вывод
+
     for(int k=0;k<N;k++)
     {
         number=ui->tableWidget->item(k,0)->text();
-        i[k]=number.toInt();
+        firstStanok[k]=number.toInt();
         number=ui->tableWidget->item(k,1)->text();
-        j[k]=number.toInt();
+        secondStanok[k]=number.toInt();
         number=ui->tableWidget->item(k,3)->text();
-        s1[k]=number.toInt();
+        firstStanok[k]=number.toInt();
         number=ui->tableWidget->item(k,4)->text();
-        f1[k]=number.toInt();
+        secondStanok[k]=number.toInt();
+        makePlot(); // временная постройка
         //number=ui->tableWidget->item(k,5)->text();
         /*s2[k]=number.toInt();
         number=ui->tableWidget->item(k,6)->text();
@@ -182,8 +223,10 @@ void Form::on_makeGraph_clicked()
         number=ui->tableWidget->item(k,7)->text();
         tf[k]=number.toInt();
         number=ui->tableWidget->item(k,8)->text();
-        ff[k]=number.toInt();*/
+        ff[k]=number.toInt(); */
     }
+
+
     makePlot(); //построить график
 }
 
